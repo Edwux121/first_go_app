@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
-	"time"
 )
 
 const conferenceTickets int = 50
@@ -22,47 +20,67 @@ type UserData struct {
 }
 
 // wait Group
-var wg = sync.WaitGroup{}
+//var wg = sync.WaitGroup{}
 
 func main() {
+
 	//calling greetUsers function
 	greetUsers()
 
-	firstName, lastName, email, userTickets := getUserInput()
-	//checking user input
-	isValidName, isValidEmail, isValidTicketNumber := ValidareUserInput(firstName, lastName, email, userTickets, remainingTickets)
+	var action string
 
-	//checking if we have enough tickets for the user
-	if isValidName && isValidEmail && isValidTicketNumber {
+	fmt.Println("Please enter what action you want to perform(add, delete, show):")
+	fmt.Scan(&action)
 
-		bookTicket(userTickets, firstName, lastName, email)
+	if action == "add" {
+		firstName, lastName, email, userTickets := getUserInput()
+		//checking user input
+		isValidName, isValidEmail, isValidTicketNumber := ValidareUserInput(firstName, lastName, email, userTickets, remainingTickets)
+		//checking if we have enough tickets for the user
+		if isValidName && isValidEmail && isValidTicketNumber {
 
-		wg.Add(1)
-		go sendTicket(userTickets, firstName, lastName, email)
+			bookTicket(userTickets, firstName, lastName, email)
 
-		//call function print first names
-		firstNames := getFirstNames()
-		fmt.Printf("The first names of the bookings: %v\n", firstNames)
+			//wg.Add(1)
+			//go sendTicket(userTickets, firstName, lastName, email)
 
-		//cheking if there is remaining tickets
-		if remainingTickets == 0 {
-			//end of the program
-			fmt.Println("Our conference is booked out. Come back next time!")
-			//break
+			//call function print first names
+			//firstNames := getFirstNames()
+			//fmt.Printf("The first names of the bookings: %v\n", firstNames)
+
+			//cheking if there is remaining tickets
+			if remainingTickets == 0 {
+				//end of the program
+				fmt.Println("Our conference is booked out. Come back next time!")
+				//break
+			}
+		} else {
+			// !=
+			if !isValidName {
+				fmt.Println("Your first name or last name you entered is too short.")
+			}
+			if !isValidEmail {
+				fmt.Println("Your email address doesn't contain @ symbol.")
+			}
+			if !isValidTicketNumber {
+				fmt.Println("The number of tickets you've entered is invalid.")
+			}
 		}
+		//wg.Wait()
+	} else if action == "delete" {
+		var idToDelete int
+
+		fmt.Println("Please specify which user you want to delete(provie ID of the user): ")
+		fmt.Scan(&idToDelete)
+		//calling a function to delete the user from MYSQL data base based on ID
+		MysqlConnectDel(idToDelete)
+		fmt.Println("You have successfully deleted the user!")
+	} else if action == "show" {
+		fmt.Println("Here is a full list of users that have booked a ticket:")
+		MysqlConnectShow()
 	} else {
-		// !=
-		if !isValidName {
-			fmt.Println("Your first name or last name you entered is too short.")
-		}
-		if !isValidEmail {
-			fmt.Println("Your email address doesn't contain @ symbol.")
-		}
-		if !isValidTicketNumber {
-			fmt.Println("The number of tickets you've entered is invalid.")
-		}
+		fmt.Println("We were not able to find your action, please try again!")
 	}
-	wg.Wait()
 }
 
 func greetUsers() {
@@ -71,7 +89,7 @@ func greetUsers() {
 	fmt.Println("Get your tickets here to attend!")
 }
 
-func getFirstNames() []string {
+/*func getFirstNames() []string {
 	//taking only firstname from the slice
 	firstNames := []string{}
 	for _, booking := range bookings {
@@ -80,7 +98,7 @@ func getFirstNames() []string {
 
 	//fmt.Printf("The first names of the bookings: %v\n", firstNames)
 	return firstNames
-}
+}*/
 
 func getUserInput() (string, string, string, uint) {
 	//variables for storing user data
@@ -89,6 +107,7 @@ func getUserInput() (string, string, string, uint) {
 	var email string
 	var userTickets uint
 	// asking user for the user input
+
 	fmt.Println("Please enter your first name:")
 	fmt.Scan(&firstName)
 
@@ -115,16 +134,20 @@ func bookTicket(userTickets uint, firstName string, lastName string, email strin
 		numberOfTickets: userTickets,
 	}
 
+	//calling MysqlConnectAdd function from mysql_conn.go
+	MysqlConnectAdd(firstName, lastName, email, userTickets)
+
 	//we update bookings slice with First Name and Last Name
 	bookings = append(bookings, userData)
 	fmt.Printf("The list of bookings is %v\n", bookings)
+	fmt.Println("You've booked your tickets!")
 
-	fmt.Printf("Thank you %v %v for booking %v tickets. You will receive a confirmation email at %v\n", firstName, lastName, userTickets, email)
-	fmt.Printf("%v tickets remaining for %v\n", remainingTickets, conferenceName)
+	/*fmt.Printf("Thank you %v %v for booking %v tickets. You will receive a confirmation email at %v\n", firstName, lastName, userTickets, email)
+	fmt.Printf("%v tickets remaining for %v\n", remainingTickets, conferenceName)*/
 
 }
 
-func sendTicket(userTickets uint, firstName string, lastName string, email string) {
+/*func sendTicket(userTickets uint, firstName string, lastName string, email string) {
 	time.Sleep(10 * time.Second)
 	var ticket = fmt.Sprintf("%v tickets for %v %v \n", userTickets, firstName, lastName)
 	fmt.Println("#####################")
@@ -132,3 +155,4 @@ func sendTicket(userTickets uint, firstName string, lastName string, email strin
 	fmt.Println("#####################")
 	wg.Done()
 }
+*/
